@@ -1,0 +1,16 @@
+{
+  "name": "onym",
+  "private": true,
+  "version": "3.0.0",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "npm -w @onym/api run db:migrate:local && npm -w @onym/api run dev",
+    "typecheck": "npm -w @onym/shared run typecheck && npm -w @onym/api run typecheck",
+    "test": "npm -w @onym/api run test",
+    "serve:test": "npm -w @onym/api run serve:test",
+    "e2e": "node e2e/run.mjs",
+    "deploy": "npm -w @onym/api run deploy",
+    "mobile:sync": "node mobile/scripts/sync-web.mjs"
+  },
+  "engines": { "node": ">=22.5" }
+}
