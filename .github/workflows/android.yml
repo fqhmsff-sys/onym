@@ -1,0 +1,39 @@
+name: Bangun APK Android
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Alamat server HTTPS (opsional; kosongkan untuk mode lokal, tanpa server)"
+        required: false
+        default: ""
+permissions:
+  contents: read   # hak minimum untuk GITHUB_TOKEN (prinsip least-privilege)
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Pasang dependensi mobile
+        working-directory: mobile
+        run: npm install
+      - name: Salin web (kode sama dengan PWA)
+        working-directory: mobile
+        env: { ONYM_API_URL: "${{ inputs.api_url }}" }
+        run: node scripts/sync-web.mjs
+      - name: Buat proyek Android
+        working-directory: mobile
+        run: npm run add:android
+      - name: Sinkronkan & bangun
+        working-directory: mobile
+        run: |
+          npx cap sync android
+          cd android && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onym-debug-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
