@@ -1,0 +1,48 @@
+name: onym
+description: Onym — sosial media (web + Android, satu kode Flutter).
+publish_to: none
+version: 4.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  cryptography: ^2.7.0
+  cryptography_flutter: ^2.3.2
+  flutter_secure_storage: ^9.2.2
+  http: ^1.2.2
+  go_router: ^14.6.0
+  hive_ce_flutter: ^2.1.0
+  path_drawing: ^1.0.1
+  image_picker: ^1.1.2
+  video_player: ^2.9.2
+  record: ^5.1.2
+  just_audio: ^0.9.42
+  cached_network_image: ^3.4.1
+  path_provider: ^2.1.5
+  share_plus: ^10.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icon/icon.png
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: assets/icon/icon_fg.png
+  min_sdk_android: 23
