@@ -1,0 +1,3 @@
+# Gateway MongoDB dipanggil Worker dengan rahasia bersama (x-internal-secret), bukan JWT pengguna.
+[functions.mongo]
+verify_jwt = false
