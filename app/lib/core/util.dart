@@ -26,6 +26,19 @@ String ago(String iso, String Function(String) t) {
   return '${l.day}/${l.month}/${l.year}';
 }
 
+String errText(Object e, String Function(String) t) {
+  final s = e.toString();
+  final m = RegExp(r'ApiException: ([a-zA-Z0-9_]+)').firstMatch(s);
+  if (m != null) {
+    final code = m.group(1)!;
+    final translated = t('err.$code');
+    if (translated != 'err.$code') return translated;
+    if (code.startsWith('http_')) return t('err.server_unavailable');
+  }
+  if (s.contains('TimeoutException')) return t('err.timeout');
+  return t('error');
+}
+
 String fmtDur(int ms) {
   final s = (ms / 1000).round();
   return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
