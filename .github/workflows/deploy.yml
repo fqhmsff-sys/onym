@@ -30,7 +30,8 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: fd781b794223dd9a1fe41ce5534a0a23
+          wranglerVersion: "4.40.0"
           workingDirectory: backend/worker
           preCommands: npm install --no-audit --no-fund
           command: d1 execute onym-edge --remote --file=../d1/0001_edge.sql
@@ -39,7 +40,8 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: fd781b794223dd9a1fe41ce5534a0a23
+          wranglerVersion: "4.40.0"
           workingDirectory: backend/worker
           command: deploy
           secrets: |
