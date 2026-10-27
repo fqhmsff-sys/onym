@@ -1,0 +1,74 @@
+name: Onym — build & deploy
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions: { contents: write }
+concurrency: { group: onym-deploy, cancel-in-progress: true }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Uji keamanan Worker (harus lolos sebelum deploy)
+        run: bash backend/worker/test/run.sh
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Siapkan proyek Flutter
+        working-directory: app
+        run: bash tool/prepare.sh
+      - name: Build WEB
+        working-directory: app
+        run: flutter build web --release --no-web-resources-cdn --dart-define=BUILD_NUMBER=${{ github.run_number }}
+      - name: Taruh web ke Worker
+        run: rm -rf backend/worker/public && mkdir -p backend/worker/public && cp -r app/build/web/. backend/worker/public/
+      - name: Skema D1 (aman diulang)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: backend/worker
+          preCommands: npm install --no-audit --no-fund
+          command: d1 execute onym-edge --remote --file=../d1/0001_edge.sql
+      - name: Deploy ke Cloudflare Workers (web + API)
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: backend/worker
+          command: deploy
+          secrets: |
+            NEON_DATABASE_URL
+            AUTH_PEPPER
+            JWT_SECRET
+            INTERNAL_SECRET
+            SUPABASE_SERVICE_KEY
+            IP_HASH_SALT
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          AUTH_PEPPER: ${{ secrets.AUTH_PEPPER }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          INTERNAL_SECRET: ${{ secrets.INTERNAL_SECRET }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          IP_HASH_SALT: ${{ secrets.IP_HASH_SALT }}
+      - name: Build ANDROID (APK) — alamat API = Worker yang baru di-deploy
+        working-directory: app
+        run: |
+          API="${{ vars.API_BASE }}"
+          if [ -z "$API" ]; then API="${{ steps.deploy.outputs.deployment-url }}"; fi
+          echo "API_BASE=$API"
+          flutter build apk --release --dart-define=API_BASE="$API" --dart-define=BUILD_NUMBER=${{ github.run_number }}
+      - uses: actions/upload-artifact@v4
+        with: { name: onym-apk, path: app/build/app/outputs/flutter-apk/app-release.apk }
+      - name: Rilis APK (tautan unduhan)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Onym build ${{ github.run_number }}
+          body: "Web: ${{ steps.deploy.outputs.deployment-url }}"
+          files: app/build/app/outputs/flutter-apk/app-release.apk
