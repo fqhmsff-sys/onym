@@ -264,7 +264,11 @@ async function notifications(c: Req, u: Claims) {
 // ---------------------------------------------------------------- router login
 async function api(c: Req): Promise<Response> {
   const p = c.url.pathname, m = c.req.method;
-  if (p === "/api/health") return json({ ok: true });
+  if (p === "/api/health") {
+    const missing = ["NEON_DATABASE_URL", "AUTH_PEPPER", "JWT_SECRET", "INTERNAL_SECRET", "IP_HASH_SALT", "SUPABASE_SERVICE_KEY"]
+      .filter((k) => !String((c.env as any)[k] ?? "").trim());
+    return json({ ok: missing.length === 0, ready: missing.length === 0, missing: missing.length }, missing.length ? 503 : 200);
+  }
   if (m === "GET" && p === "/api/config") return config(c);
   if (m === "GET" && p === "/api/feed/public") return feedPublic(c);
   if (m === "GET" && p.startsWith("/api/avatar/")) return getAvatar(c);
