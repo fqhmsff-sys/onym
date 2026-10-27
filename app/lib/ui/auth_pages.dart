@@ -60,25 +60,33 @@ class RegisterPage extends StatefulWidget {
 class _RegisterState extends State<RegisterPage> with _Busy {
   final _u = TextEditingController(), _n = TextEditingController(), _p = TextEditingController();
   bool _showPass = false;
-  int? _day, _month, _year;
+  DateTime? _birth;
 
-  DateTime? get _birth {
-    if (_day == null || _month == null || _year == null) return null;
-    try {
-      final d = DateTime(_year!, _month!, _day!);
-      return d.year == _year && d.month == _month && d.day == _day ? d : null;
-    } catch (_) { return null; }
-  }
   int _age(DateTime birth) {
     final n = DateTime.now();
     var age = n.year - birth.year;
     if (n.month < birth.month || (n.month == birth.month && n.day < birth.day)) age--;
     return age;
   }
-  List<int> get _days {
-    if (_month == null || _year == null) return List.generate(31, (i) => i + 1);
-    return List.generate(DateTime(_year!, _month! + 1, 0).day, (i) => i + 1);
+  String _birthText(DateTime d) => '${d.day} ${tr('month.${d.month}')} ${d.year}';
+
+  Future<void> _pickBirth() async {
+    FocusScope.of(context).unfocus();
+    final now = DateTime.now();
+    final latest = DateTime(now.year - 11, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _birth ?? DateTime(latest.year - 4, 1, 1),
+      firstDate: DateTime(1900, 1, 1),
+      lastDate: latest,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      helpText: tr('auth.birth'),
+      cancelText: tr('cancel'),
+      confirmText: tr('auth.birthUse'),
+    );
+    if (picked != null && mounted) setState(() { _birth = picked; err = null; });
   }
+
   void _go() {
     final u = _u.text.trim().toLowerCase();
     if (!usernameRe.hasMatch(u)) { setState(() => err = tr('auth.badUser')); return; }
@@ -97,16 +105,16 @@ class _RegisterState extends State<RegisterPage> with _Busy {
       onPressed: () => setState(() => _showPass = !_showPass),
       icon: Icon(_showPass ? Icons.visibility_off_outlined : Icons.visibility_outlined),
     ))), const SizedBox(height: 10),
-    InputDecorator(decoration: InputDecoration(labelText: tr('auth.birth')), child: Row(children: [
-      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<int>(isExpanded: true, value: _day, hint: Text(tr('auth.day')),
-        items: [for (final d in _days) DropdownMenuItem(value: d, child: Text('$d'))], onChanged: (v) => setState(() => _day = v)))),
-      const SizedBox(width: 8),
-      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<int>(isExpanded: true, value: _month, hint: Text(tr('auth.month')),
-        items: [for (var m = 1; m <= 12; m++) DropdownMenuItem(value: m, child: Text(tr('month.$m')))], onChanged: (v) => setState(() { _month = v; if (_day != null && !_days.contains(_day)) _day = null; })))),
-      const SizedBox(width: 8),
-      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<int>(isExpanded: true, value: _year, hint: Text(tr('auth.year')),
-        items: [for (var y = DateTime.now().year - 11; y >= 1900; y--) DropdownMenuItem(value: y, child: Text('$y'))], onChanged: (v) => setState(() { _year = v; if (_day != null && !_days.contains(_day)) _day = null; })))),
-    ])),
+    InkWell(borderRadius: BorderRadius.circular(12), onTap: _pickBirth, child: InputDecorator(
+      decoration: InputDecoration(prefixIcon: const Icon(Icons.cake_outlined), suffixIcon: const Icon(Icons.chevron_right_rounded)),
+      child: _birth == null
+        ? Text(tr('auth.birth'), style: const TextStyle(color: Color(0xFF999999)))
+        : Row(children: [
+            Expanded(child: Text(_birthText(_birth!), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
+            Text(tr('auth.ageValue', {'age':'${_age(_birth!)}'}), style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .55))),
+          ]),
+    )),
+    Padding(padding: const EdgeInsets.fromLTRB(4, 7, 4, 0), child: Text(tr('auth.ageHint'), style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .55)))),
     msg(context), const SizedBox(height: 16), btn(tr('auth.register'), _go),
     TextButton(onPressed: () => context.go('/login'), child: Text(tr('auth.haveacc'))),
   ]);
