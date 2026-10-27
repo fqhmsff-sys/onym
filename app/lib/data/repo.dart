@@ -115,9 +115,9 @@ class Repo extends ChangeNotifier {
   }
   Future<void> _loadMe() async { final j = await _api('GET', '/api/me') as Map; me = Me('${j['id']}', '${j['username']}', '${j['display_name']}'); await LocalCache.put('me', {'id': me!.id, 'username': me!.username, 'display_name': me!.displayName}); }
 
-  Future<void> register(String username, String displayName, String password) async {
+  Future<void> register(String username, String displayName, String password, DateTime birthDate) async {
     final salt = _rand(16); final key = await _kdf(password, salt, Cfg.kdfIterations);
-    final j = await _api('POST', '/api/auth/register', auth: false, body: {'username': username, 'displayName': displayName, 'salt': base64.encode(salt), 'key': base64.encode(key)}) as Map;
+    final j = await _api('POST', '/api/auth/register', auth: false, body: {'username': username, 'displayName': displayName, 'birthDate': '${birthDate.year.toString().padLeft(4, '0')}-${birthDate.month.toString().padLeft(2, '0')}-${birthDate.day.toString().padLeft(2, '0')}', 'salt': base64.encode(salt), 'key': base64.encode(key)}) as Map;
     pendingCodes = [for (final c in (j['recovery_codes'] as List)) '$c'];
     await _afterAuth(j);
   }
