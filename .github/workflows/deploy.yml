@@ -44,20 +44,6 @@ jobs:
           wranglerVersion: "4.40.0"
           workingDirectory: backend/worker
           command: deploy
-          secrets: |
-            NEON_DATABASE_URL
-            AUTH_PEPPER
-            JWT_SECRET
-            INTERNAL_SECRET
-            SUPABASE_SERVICE_KEY
-            IP_HASH_SALT
-        env:
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          AUTH_PEPPER: ${{ secrets.AUTH_PEPPER }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          INTERNAL_SECRET: ${{ secrets.INTERNAL_SECRET }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          IP_HASH_SALT: ${{ secrets.IP_HASH_SALT }}
       - name: Build ANDROID (APK) — alamat API = Worker yang baru di-deploy
         working-directory: app
         run: |
