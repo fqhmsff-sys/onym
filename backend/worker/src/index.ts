@@ -62,7 +62,7 @@ async function authRoutes(c: Req): Promise<Response> {
     const b = await readJson(c.req, 2048);
     const username = A.parseUsername(b.username), display = str(b.displayName ?? username, 1, 40, "displayName");
     const birthDate = str(b.birthDate, 10, 10, "birthDate");
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate)) throw new HttpError(422, "birth_date_invalid");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) throw new HttpError(422, "birth_date_invalid");
     const bd = new Date(`${birthDate}T00:00:00Z`), now = new Date();
     if (Number.isNaN(bd.getTime()) || bd.toISOString().slice(0, 10) !== birthDate) throw new HttpError(422, "birth_date_invalid");
     let age = now.getUTCFullYear() - bd.getUTCFullYear();
