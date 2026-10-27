@@ -58,20 +58,55 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterState();
 }
 class _RegisterState extends State<RegisterPage> with _Busy {
-  final _u = TextEditingController(), _n = TextEditingController(), _p = TextEditingController(), _p2 = TextEditingController();
+  final _u = TextEditingController(), _n = TextEditingController(), _p = TextEditingController();
+  bool _showPass = false;
+  int? _day, _month, _year;
+
+  DateTime? get _birth {
+    if (_day == null || _month == null || _year == null) return null;
+    try {
+      final d = DateTime(_year!, _month!, _day!);
+      return d.year == _year && d.month == _month && d.day == _day ? d : null;
+    } catch (_) { return null; }
+  }
+  int _age(DateTime birth) {
+    final n = DateTime.now();
+    var age = n.year - birth.year;
+    if (n.month < birth.month || (n.month == birth.month && n.day < birth.day)) age--;
+    return age;
+  }
+  List<int> get _days {
+    if (_month == null || _year == null) return List.generate(31, (i) => i + 1);
+    return List.generate(DateTime(_year!, _month! + 1, 0).day, (i) => i + 1);
+  }
   void _go() {
     final u = _u.text.trim().toLowerCase();
     if (!usernameRe.hasMatch(u)) { setState(() => err = tr('auth.badUser')); return; }
     if (_p.text.length < 8) { setState(() => err = tr('auth.shortPass')); return; }
-    if (_p.text != _p2.text) { setState(() => err = tr('auth.mismatch')); return; }
-    run(() => Repo.i.register(u, _n.text.trim().isEmpty ? u : _n.text.trim(), _p.text));
+    final birth = _birth;
+    if (birth == null) { setState(() => err = tr('auth.birthRequired')); return; }
+    if (_age(birth) < 11) { setState(() => err = tr('auth.age11')); return; }
+    run(() => Repo.i.register(u, _n.text.trim().isEmpty ? u : _n.text.trim(), _p.text, birth));
   }
   @override
   Widget build(BuildContext context) => _AuthScaffold([
     TextField(controller: _u, decoration: InputDecoration(hintText: tr('auth.username'), prefixText: '@')), const SizedBox(height: 10),
     TextField(controller: _n, maxLength: 40, buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null, decoration: InputDecoration(hintText: tr('auth.name'))), const SizedBox(height: 10),
-    TextField(controller: _p, obscureText: true, decoration: InputDecoration(hintText: tr('auth.password'))), const SizedBox(height: 10),
-    TextField(controller: _p2, obscureText: true, onSubmitted: (_) => _go(), decoration: InputDecoration(hintText: tr('auth.password2'))),
+    TextField(controller: _p, obscureText: !_showPass, onSubmitted: (_) => _go(), decoration: InputDecoration(hintText: tr('auth.password'), suffixIcon: IconButton(
+      tooltip: _showPass ? tr('auth.hidePassword') : tr('auth.showPassword'),
+      onPressed: () => setState(() => _showPass = !_showPass),
+      icon: Icon(_showPass ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+    ))), const SizedBox(height: 10),
+    InputDecorator(decoration: InputDecoration(labelText: tr('auth.birth')), child: Row(children: [
+      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<int>(isExpanded: true, value: _day, hint: Text(tr('auth.day')),
+        items: [for (final d in _days) DropdownMenuItem(value: d, child: Text('$d'))], onChanged: (v) => setState(() => _day = v)))),
+      const SizedBox(width: 8),
+      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<int>(isExpanded: true, value: _month, hint: Text(tr('auth.month')),
+        items: [for (var m = 1; m <= 12; m++) DropdownMenuItem(value: m, child: Text(tr('month.$m')))], onChanged: (v) => setState(() { _month = v; if (_day != null && !_days.contains(_day)) _day = null; })))),
+      const SizedBox(width: 8),
+      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<int>(isExpanded: true, value: _year, hint: Text(tr('auth.year')),
+        items: [for (var y = DateTime.now().year - 11; y >= 1900; y--) DropdownMenuItem(value: y, child: Text('$y'))], onChanged: (v) => setState(() { _year = v; if (_day != null && !_days.contains(_day)) _day = null; })))),
+    ])),
     msg(context), const SizedBox(height: 16), btn(tr('auth.register'), _go),
     TextButton(onPressed: () => context.go('/login'), child: Text(tr('auth.haveacc'))),
   ]);
