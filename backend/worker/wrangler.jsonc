@@ -8,7 +8,7 @@
     "SUPABASE_URL": "https://fttskmwqaskavoortvka.supabase.co",
     "SUPABASE_ANON_KEY": "sb_publishable_NedUHCSmv-K6X99_H10X6g_kKPsFEcU"
   },
-  "d1_databases": [{ "binding": "DB", "database_name": "onym-edge", "database_id": "GANTI-ID-D1" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "onym-edge", "database_id": "c7ccee9a-9cd6-4c3b-9a0e-70ab56f20340" }],
   "triggers": { "crons": ["0 3 * * *"] },
   "ratelimits": [
     { "name": "RL_ANON",   "namespace_id": "2001", "simple": { "limit": 60,  "period": 60 } },
