@@ -66,12 +66,13 @@ const s1 = (await call("/api/auth/salt", { body: { username: "nobody" } })).j.sa
 eq("salt palsu deterministik", s1, s2);
 eq("username jelek → 422", (await call("/api/auth/register", { body: { username: "A!", displayName: "x", salt: b64(salt), key: b64(key) } })).s, 422);
 eq("salt panjang salah → 422", (await call("/api/auth/register", { body: { username: "faqih", displayName: "F", salt: b64(rnd(8)), key: b64(key) } })).s, 422);
-const reg = await call("/api/auth/register", { body: { username: "Faqih", displayName: "Faqih M", salt: b64(salt), key: b64(key) } });
+eq("usia <11 → 422", (await call("/api/auth/register", { body: { username: "kiduser", displayName: "Kid", birthDate: new Date().toISOString().slice(0, 10), salt: b64(salt), key: b64(key) } })).s, 422);
+const reg = await call("/api/auth/register", { body: { username: "Faqih", displayName: "Faqih M", birthDate: "2000-06-15", salt: b64(salt), key: b64(key) } });
 eq("daftar → 201", reg.s, 201); eq("8 kode pemulihan", reg.j.recovery_codes.length, 8);
 ok("kode berformat XXXX-XXXX-XXXX", /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(reg.j.recovery_codes[0]));
 const uid = reg.j.user.id; let tokens = reg.j.tokens;
 ok("kata sandi/kunci TIDAK ada di D1", !JSON.stringify(sqlite.prepare("select * from accounts").all()).includes(b64(key)));
-eq("nama pengguna dobel → 409", (await call("/api/auth/register", { body: { username: "faqih", displayName: "x", salt: b64(salt), key: b64(key2) } })).s, 409);
+eq("nama pengguna dobel → 409", (await call("/api/auth/register", { body: { username: "faqih", displayName: "x", birthDate: "2000-06-15", salt: b64(salt), key: b64(key2) } })).s, 409);
 eq("salt akun nyata = salt tersimpan", (await call("/api/auth/salt", { body: { username: "faqih" } })).j.salt, b64(salt));
 eq("login kunci salah → 401", (await call("/api/auth/login", { body: { username: "faqih", key: b64(key2) } })).s, 401);
 const login = await call("/api/auth/login", { body: { username: "faqih", key: b64(key) } }); eq("login benar → 200", login.s, 200);
