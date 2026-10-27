@@ -61,11 +61,19 @@ async function authRoutes(c: Req): Promise<Response> {
     await A.checkLock(c.env, `reg:${ipk}`);
     const b = await readJson(c.req, 2048);
     const username = A.parseUsername(b.username), display = str(b.displayName ?? username, 1, 40, "displayName");
+    const birthDate = str(b.birthDate, 10, 10, "birthDate");
+    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate)) throw new HttpError(422, "birth_date_invalid");
+    const bd = new Date(`${birthDate}T00:00:00Z`), now = new Date();
+    if (Number.isNaN(bd.getTime()) || bd.toISOString().slice(0, 10) !== birthDate) throw new HttpError(422, "birth_date_invalid");
+    let age = now.getUTCFullYear() - bd.getUTCFullYear();
+    const beforeBirthday = now.getUTCMonth() < bd.getUTCMonth() || (now.getUTCMonth() === bd.getUTCMonth() && now.getUTCDate() < bd.getUTCDate());
+    if (beforeBirthday) age--;
+    if (age < 11 || bd < new Date("1900-01-01T00:00:00Z")) throw new HttpError(422, "age_minimum");
     const salt = A.parseKey(b.salt, 16, "salt"), key = A.parseKey(b.key, 32, "key");
     await A.hit(c.env, `reg:${ipk}`, 5, 3600, 3600);
     const id = crypto.randomUUID();
     const codes = await A.createAccount(c.env, id, username, salt, key);
-    try { await nq(c.env, "api_create_profile", [id, username, display]); }
+    try { await nq(c.env, "api_create_profile", [id, username, display, birthDate]); }
     catch (e) { await A.dropAccount(c.env, id); throw e; } // dua penyimpanan: gagal di Neon → batalkan akun di D1
     return json({ user: userOut(id, username, display), tokens: await A.issue(c.env, id, ua), recovery_codes: codes }, 201);
   }
