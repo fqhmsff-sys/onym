@@ -13,7 +13,7 @@ const SIG: Record<string, string> = {
   api_comments: "uuid,uuid", api_add_comment: "uuid,uuid,uuid,uuid,text", api_edit_comment: "uuid,uuid,text", api_delete_comment: "uuid,uuid", api_like_comment: "uuid,uuid,boolean",
   api_profile: "uuid,text", api_follow: "uuid,text,boolean", api_follow_list: "uuid,text,text,timestamptz,int", api_block: "uuid,text,boolean", api_blocked: "uuid",
   api_request_relation: "uuid,text,text", api_my_relations: "uuid", api_approve_relation: "uuid,uuid", api_remove_relation: "uuid,uuid", api_user_relations: "uuid,text",
-  api_create_profile: "uuid,text,text", api_me: "uuid", api_update_me: "uuid,jsonb", api_set_avatar: "uuid,bigint", api_delete_me: "uuid",
+  api_create_profile: "uuid,text,text,date", api_me: "uuid", api_update_me: "uuid,jsonb", api_set_avatar: "uuid,bigint", api_delete_me: "uuid",
   api_users_lite: "uuid[]", api_media_visible: "uuid,text[]", api_fanout_targets: "uuid,int", api_report: "uuid,uuid,text,text", api_audit: "text,uuid,text,text,int,jsonb", api_purge: "",
 };
 export type NeonFn = keyof typeof SIG;
