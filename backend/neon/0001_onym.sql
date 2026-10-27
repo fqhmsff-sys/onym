@@ -212,11 +212,13 @@ create function public.valid_vis(p text) returns boolean language sql immutable 
 $$;
 
 -- ===================================================== API: akun
-create function public.api_create_profile(p_id uuid, p_username text, p_display text) returns void language plpgsql security definer set search_path = '' as $$
+create function public.api_create_profile(p_id uuid, p_username text, p_display text, p_birth_date date) returns void language plpgsql security definer set search_path = '' as $
 begin
-  insert into public.profiles (id, username, display_name) values (p_id, lower(p_username), p_display);
+  if p_birth_date is null or p_birth_date < date '1900-01-01' or p_birth_date > current_date
+     or p_birth_date > (current_date - interval '11 years')::date then raise exception 'age_minimum'; end if;
+  insert into public.profiles (id, username, display_name, birth_date) values (p_id, lower(p_username), p_display, p_birth_date);
 exception when unique_violation then raise exception 'conflict'; when check_violation then raise exception 'invalid';
-end $$;
+end $;
 create function public.api_me(p_actor uuid) returns table (id uuid, username text, display_name text, bio text, avatar text, birth_date text, birth_date_visibility text, default_visibility text, relations_visibility text, settings jsonb)
 language sql stable security definer set search_path = '' as $$
   select u.id, u.username, u.display_name, u.bio, case when u.avatar_ver is null then null else u.id::text || '/' || u.avatar_ver end, u.birth_date::text, u.birth_date_visibility, u.default_visibility, u.relations_visibility, u.settings
