@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 class OC {
-  static const like = Color(0xFFFF3040);   // satu-satunya aksen warna: suka & penanda baru
+  static const like = Color(0xFFFF3040);
   static const star = Color(0xFFFFB400);
 }
 
-/// Gaya Threads: putih/hitam murni, garis tipis, tanpa bayangan, ikon garis. Aksen merah hanya untuk suka.
 ThemeData buildTheme(Brightness b) {
   final dark = b == Brightness.dark;
   final bg = dark ? const Color(0xFF101010) : Colors.white;
@@ -39,6 +38,9 @@ ThemeData buildTheme(Brightness b) {
     switchTheme: SwitchThemeData(thumbColor: WidgetStatePropertyAll(bg), trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? fg : const Color(0xFFD0D0D0)), trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent)),
     checkboxTheme: CheckboxThemeData(fillColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? fg : Colors.transparent), checkColor: WidgetStatePropertyAll(bg)),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: fg),
-    pageTransitionsTheme: const PageTransitionsTheme(builders: {TargetPlatform.android: ZoomPageTransitionsBuilder(), TargetPlatform.iOS: CupertinoPageTransitionsBuilder()}),
+    pageTransitionsTheme: const PageTransitionsTheme(builders: {
+      TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
+    }),
   );
 }
