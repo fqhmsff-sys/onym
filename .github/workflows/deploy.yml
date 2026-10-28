@@ -44,6 +44,30 @@ jobs:
           wranglerVersion: "4.40.0"
           workingDirectory: backend/worker
           command: deploy
+      - name: Smoke test backend produksi
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="${{ steps.deploy.outputs.deployment-url }}"
+          echo "Testing $API/api/health"
+          curl --fail-with-body --retry 5 --retry-delay 3 "$API/api/health"
+          echo
+          echo "Testing $API/api/config"
+          curl --fail-with-body --retry 5 --retry-delay 3 "$API/api/config"
+          echo
+          USER="ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          SALT="$(openssl rand -base64 16 | tr -d '\n')"
+          KEY="$(openssl rand -base64 32 | tr -d '\n')"
+          BODY="$(jq -nc --arg u "$USER" --arg s "$SALT" --arg k "$KEY" '{username:$u,displayName:"CI Backend Probe",birthDate:"2000-01-01",salt:$s,key:$k}')"
+          RESP="$(mktemp)"
+          CODE="$(curl -sS -o "$RESP" -w '%{http_code}' -H 'content-type: application/json' --data "$BODY" "$API/api/auth/register")"
+          cat "$RESP" | jq '{error, user, has_tokens:(.tokens != null)}'
+          if [ "$CODE" != "201" ]; then echo "register failed: HTTP $CODE"; exit 1; fi
+          ACCESS="$(jq -r '.tokens.access' "$RESP")"
+          curl --fail-with-body -H "authorization: Bearer $ACCESS" "$API/api/me" >/dev/null
+          curl --fail-with-body -X DELETE -H "authorization: Bearer $ACCESS" "$API/api/me" >/dev/null
+          echo "Production registration/login/delete smoke test passed."
+
       - name: Build ANDROID (APK) — alamat API = Worker yang baru di-deploy
         working-directory: app
         run: |
