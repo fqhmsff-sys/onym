@@ -130,7 +130,7 @@ class _ComposeState extends State<ComposePage> {
         final m = _media[i]; setState(() => _status = '${tr('compose.uploading')} ${i + 1}/${_media.length}');
         up.add(m.kind == 'photo' ? await Repo.i.uploadPhoto(m.bytes, w: m.w, h: m.h) : await Repo.i.uploadFile(m.bytes, m.ext, m.kind, w: m.w, h: m.h, d: m.d));
       }
-      await Repo.i.createPost(body: text, media: up, visibility: _vis, inRandom: _random && _vis == 'public' && up.isNotEmpty);
+      await Repo.i.createPost(body: text, media: up, visibility: _vis, inRandom: _random && _vis == 'public' && up.isNotEmpty && text.isEmpty);
       if (mounted) context.pop(true);
     } catch (e) {
       if (mounted) { toast(context, errText(e, tr)); setState(() { _busy = false; _status = ''; }); }
@@ -141,7 +141,7 @@ class _ComposeState extends State<ComposePage> {
     await showModalBottomSheet<void>(context: context, isScrollControlled: true, builder: (c) => StatefulBuilder(builder: (c, set) => SafeArea(child: ConstrainedBox(constraints: BoxConstraints(maxHeight: MediaQuery.of(c).size.height * .8), child: ListView(shrinkWrap: true, children: [
       Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 6), child: Text(tr('compose.visibility'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16))),
       for (final v in kVisibilities) ListTile(dense: true, title: Text(tr('vis.$v')), trailing: _vis == v ? const Icon(Icons.check) : null, onTap: () { setState(() => _vis = v); set(() {}); }),
-      if ((_media.isNotEmpty || (widget.edit?.media.isNotEmpty ?? false)) && _vis == 'public') SwitchListTile(title: Text(tr('compose.random')), value: _random, onChanged: (v) { setState(() => _random = v); set(() {}); }),
+      if ((_media.isNotEmpty || (widget.edit?.media.isNotEmpty ?? false)) && _vis == 'public' && _t.text.trim().isEmpty) SwitchListTile(title: Text(tr('compose.random')), subtitle: Text(tr('compose.randomHint')), value: _random, onChanged: (v) { setState(() => _random = v); set(() {}); }),
     ])))));
   }
 
@@ -159,7 +159,7 @@ class _ComposeState extends State<ComposePage> {
             Avatar(keyPath: null, name: Repo.i.me?.displayName ?? '?', size: 40), const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(Repo.i.me?.username ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5)),
-              TextField(controller: _t, minLines: 1, maxLines: 14, maxLength: 2000, autofocus: !_editing, onChanged: (_) => setState(() {}), style: const TextStyle(fontSize: 16, height: 1.35),
+              TextField(controller: _t, minLines: 1, maxLines: 14, maxLength: 2000, autofocus: !_editing, onChanged: (_) => setState(() { if (_t.text.trim().isNotEmpty) _random = false; }), style: const TextStyle(fontSize: 16, height: 1.35),
                 buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
                 decoration: InputDecoration(hintText: tr('compose.hint'), filled: false, border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, isDense: true, contentPadding: const EdgeInsets.symmetric(vertical: 6))),
               if (!_editing) Row(children: [
