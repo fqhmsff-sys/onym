@@ -225,6 +225,7 @@ async function parseMedia(c: Req, v: unknown, uid: string) {
     const ok = typeof key === "string" && ((kind === "photo" && M.KEY_PHOTO.test(key)) || (kind === "video" && M.keyVideo(uid).test(key)) || (kind === "audio" && M.keyAudio(uid).test(key)));
     if (!ok) throw new HttpError(422, "media_invalid");
     if (kind === "video" && typeof d === "number" && d > 10500) throw new HttpError(422, "video_too_long");
+    if (kind === "audio" && typeof d === "number" && d > 180000) throw new HttpError(422, "audio_too_long");
     out.push({ kind: kind as string, key: key as string, w: int(w, 20000, "w"), h: int(h, 20000, "h"), d: int(d, 86_400_000, "d") });
   }
   if (out.length) {
@@ -348,7 +349,7 @@ async function api(c: Req): Promise<Response> {
     const b = await readJson(c.req, 16 * 1024);
     const id = b.id === undefined ? crypto.randomUUID() : uuidOr(b.id, "id"); const body = b.body === undefined ? "" : str(b.body, 0, 2000, "body");
     const media = await parseMedia(c, b.media, u.sub); if (!body.trim() && !media.length) throw new HttpError(422, "empty");
-    const v = b.visibility === undefined ? "public" : vis(b.visibility); const rnd = b.inRandom === true && media.length > 0 && v === "public";
+    const v = b.visibility === undefined ? "public" : vis(b.visibility); const rnd = b.inRandom === true && media.length > 0 && !body.trim() && v === "public";
     const created = await nv<boolean>(c.env, "api_create_post", [u.sub, id, body, media, v, rnd]);
     if (created) {
       if (media.length) c.ctx.waitUntil(c.env.DB.prepare(`update media_index set status = 'attached' where owner = ? and key in (${media.map(() => "?").join(",")})`).bind(u.sub, ...media.map((x) => x.key)).run());
