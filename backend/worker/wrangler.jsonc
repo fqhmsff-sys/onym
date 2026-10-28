@@ -3,6 +3,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
+  "keep_vars": true,
+  "secrets": {
+    "required": ["NEON_DATABASE_URL", "AUTH_PEPPER", "JWT_SECRET", "INTERNAL_SECRET", "SUPABASE_SERVICE_KEY", "IP_HASH_SALT"]
+  },
   "assets": { "directory": "./public", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": ["/api/*"] },
   "vars": {
     "SUPABASE_URL": "https://fttskmwqaskavoortvka.supabase.co",
