@@ -65,8 +65,17 @@ jobs:
           if [ "$CODE" != "201" ]; then echo "register failed: HTTP $CODE"; exit 1; fi
           ACCESS="$(jq -r '.tokens.access' "$RESP")"
           curl --fail-with-body -H "authorization: Bearer $ACCESS" "$API/api/me" >/dev/null
+          echo "Testing create/read/delete post"
+          POST_BODY="$(jq -nc '{body:"CI production post probe",media:[],visibility:"public",inRandom:false}')"
+          POST_RESP="$(mktemp)"
+          POST_CODE="$(curl -sS -o "$POST_RESP" -w '%{http_code}' -H "authorization: Bearer $ACCESS" -H 'content-type: application/json' --data "$POST_BODY" "$API/api/posts")"
+          cat "$POST_RESP" | jq '{error,id,duplicate}'
+          if [ "$POST_CODE" != "201" ]; then echo "create post failed: HTTP $POST_CODE"; exit 1; fi
+          POST_ID="$(jq -r '.id' "$POST_RESP")"
+          curl --fail-with-body -H "authorization: Bearer $ACCESS" "$API/api/posts/$POST_ID" >/dev/null
+          curl --fail-with-body -X DELETE -H "authorization: Bearer $ACCESS" "$API/api/posts/$POST_ID" >/dev/null
           curl --fail-with-body -X DELETE -H "authorization: Bearer $ACCESS" "$API/api/me" >/dev/null
-          echo "Production registration/login/delete smoke test passed."
+          echo "Production registration/post/read/delete/account-cleanup smoke test passed."
 
       - name: Build ANDROID (APK) — alamat API = Worker yang baru di-deploy
         working-directory: app
