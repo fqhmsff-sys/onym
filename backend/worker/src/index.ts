@@ -267,7 +267,12 @@ async function api(c: Req): Promise<Response> {
   if (p === "/api/health") {
     const missing = ["NEON_DATABASE_URL", "AUTH_PEPPER", "JWT_SECRET", "INTERNAL_SECRET", "IP_HASH_SALT", "SUPABASE_SERVICE_KEY"]
       .filter((k) => !String((c.env as any)[k] ?? "").trim());
-    return json({ ok: missing.length === 0, ready: missing.length === 0, missing: missing.length }, missing.length ? 503 : 200);
+    if (missing.length) return json({ ok: false, ready: false, checks: { secrets: false, d1: false, neon: false }, missing: missing.length }, 503);
+    let d1 = false, neon = false;
+    try { await c.env.DB.prepare("select 1 as ok").first(); d1 = true; } catch {}
+    try { await nq(c.env, "api_me", ["00000000-0000-0000-0000-000000000000"]); neon = true; } catch {}
+    const ready = d1 && neon;
+    return json({ ok: ready, ready, checks: { secrets: true, d1, neon }, missing: 0 }, ready ? 200 : 503);
   }
   if (m === "GET" && p === "/api/config") return config(c);
   if (m === "GET" && p === "/api/feed/public") return feedPublic(c);
