@@ -25,7 +25,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState s) { if (s == AppLifecycleState.resumed) _poll(); }
   Future<void> _poll() async { final n = await Repo.i.unread(); if (mounted && n != _unread) setState(() => _unread = n); }
-  Future<void> _write() async { final r = await context.push<Object?>('/compose'); if (r == true && mounted) { feedRefresh.value++; setState(() => _i = 0); } }
+  Future<void> _write() async { final r = await context.push<Object?>('/compose'); if (r == true && mounted) { setState(() => _i = 0); feedRefresh.value++; } }
 
   @override
   Widget build(BuildContext context) {
