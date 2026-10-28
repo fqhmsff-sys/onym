@@ -13,9 +13,9 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsState();
 }
 class _SettingsState extends State<SettingsPage> {
-  String _dv = 'public', _rv = 'public';
+  String _dv = 'public', _rv = 'public', _bv = 'me';
   @override
-  void initState() { super.initState(); Repo.i.mySettings().then((s) { if (mounted) setState(() { _dv = '${s['default_visibility'] ?? 'public'}'; _rv = '${s['relations_visibility'] ?? 'public'}'; }); }).catchError((_) {}); }
+  void initState() { super.initState(); Repo.i.mySettings().then((s) { if (mounted) setState(() { _dv = '${s['default_visibility'] ?? 'public'}'; _rv = '${s['relations_visibility'] ?? 'public'}'; _bv = '${s['birth_date_visibility'] ?? 'me'}'; }); }).catchError((_) {}); }
   Widget _h(String t) => Padding(padding: const EdgeInsets.fromLTRB(16, 20, 16, 6), child: Text(t, style: TextStyle(fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)));
   Widget _vis(String label, String v, void Function(String) on) => ListTile(title: Text(label), trailing: DropdownButton<String>(value: v, underline: const SizedBox.shrink(),
     items: [for (final k in kVisibilities) DropdownMenuItem(value: k, child: Text(tr('vis.$k')))], onChanged: (x) { if (x != null) on(x); }));
@@ -33,6 +33,7 @@ class _SettingsState extends State<SettingsPage> {
       _h(tr('set.privacy')),
       _vis(tr('set.defaultVis'), _dv, (v) { setState(() => _dv = v); Repo.i.updateProfile({'default_visibility': v}); }),
       _vis(tr('set.relVis'), _rv, (v) { setState(() => _rv = v); Repo.i.updateProfile({'relations_visibility': v}); }),
+      _vis(tr('set.birthVis'), _bv, (v) { setState(() => _bv = v); Repo.i.updateProfile({'birth_date_visibility': v}); }),
       ListTile(title: Text(tr('set.blocked')), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/blocked')),
       _h(tr('set.account')),
       ListTile(title: Text(tr('set.saved')), trailing: const Icon(Icons.chevron_right), onTap: () => context.push('/saved')),
