@@ -265,14 +265,16 @@ async function notifications(c: Req, u: Claims) {
 async function api(c: Req): Promise<Response> {
   const p = c.url.pathname, m = c.req.method;
   if (p === "/api/health") {
-    const missing = ["NEON_DATABASE_URL", "AUTH_PEPPER", "JWT_SECRET", "INTERNAL_SECRET", "IP_HASH_SALT", "SUPABASE_SERVICE_KEY"]
-      .filter((k) => !String((c.env as any)[k] ?? "").trim());
-    if (missing.length) return json({ ok: false, ready: false, checks: { secrets: false, d1: false, neon: false }, missing: missing.length }, 503);
+    const required = ["NEON_DATABASE_URL", "AUTH_PEPPER", "JWT_SECRET", "INTERNAL_SECRET", "IP_HASH_SALT", "SUPABASE_SERVICE_KEY"] as const;
+    const present = Object.fromEntries(required.map((k) => [k, !!String((c.env as any)[k] ?? "").trim()]));
+    const missing = required.filter((k) => !present[k]);
     let d1 = false, neon = false;
     try { await c.env.DB.prepare("select 1 as ok").first(); d1 = true; } catch {}
-    try { await nq(c.env, "api_me", ["00000000-0000-0000-0000-000000000000"]); neon = true; } catch {}
-    const ready = d1 && neon;
-    return json({ ok: ready, ready, checks: { secrets: true, d1, neon }, missing: 0 }, ready ? 200 : 503);
+    if (present.NEON_DATABASE_URL) {
+      try { await nq(c.env, "api_me", ["00000000-0000-0000-0000-000000000000"]); neon = true; } catch {}
+    }
+    const ready = missing.length === 0 && d1 && neon;
+    return json({ ok: ready, ready, checks: { secrets: present, d1, neon }, missing: missing.length }, ready ? 200 : 503);
   }
   if (m === "GET" && p === "/api/config") return config(c);
   if (m === "GET" && p === "/api/feed/public") return feedPublic(c);
