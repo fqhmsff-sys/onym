@@ -97,6 +97,7 @@ class _ComposeState extends State<ComposePage> {
       final path = await _recorder!.stop(); final ms = _recMs;
       setState(() => _rec = false);
       if (path == null || ms < 500) return;
+      if (ms > 180000) { if (mounted) toast(context, tr('compose.audio3')); return; }
       final bytes = await XFile(path).readAsBytes();
       if (!mounted) return;
       setState(() => _media.add(kIsWeb ? _M('audio', 'webm', 'audio/webm', bytes, d: ms) : _M('audio', 'm4a', 'audio/mp4', bytes, d: ms)));
@@ -109,7 +110,7 @@ class _ComposeState extends State<ComposePage> {
     if (!kIsWeb) path = '${(await getTemporaryDirectory()).path}/rec_${uuidV4()}.m4a';
     await _recorder!.start(RecordConfig(encoder: kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc, bitRate: 64000, numChannels: 1, sampleRate: 44100), path: path);
     _recMs = 0;
-    _recT = Timer.periodic(const Duration(milliseconds: 250), (_) { _recMs += 250; if (_recMs >= 600000) { _toggleRec(); } else if (mounted) setState(() {}); });
+    _recT = Timer.periodic(const Duration(milliseconds: 250), (_) { _recMs += 250; if (_recMs >= 180000) { _toggleRec(); } else if (mounted) setState(() {}); });
     setState(() => _rec = true);
   }
 
