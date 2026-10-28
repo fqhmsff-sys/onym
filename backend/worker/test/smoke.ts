@@ -133,6 +133,7 @@ eq("foto: kunci bukan milik/format salah → 422", (await post({ body: "x", medi
 eq("video milik orang lain → 422", (await post({ body: "x", media: [{ kind: "video", key: "v/22222222-2222-4222-8222-222222222222/33333333-3333-4333-8333-333333333333.mp4" }] })).s, 422);
 eq("berkas belum diunggah → 422 media_missing", (await post({ body: "x", media: [{ kind: "photo", key: "p/" + "b".repeat(24) }] })).j.error, "media_missing");
 eq("video >10 dtk → 422", (await post({ body: "x", media: [{ kind: "video", key: `v/${uid}/33333333-3333-4333-8333-333333333333.mp4`, d: 20000 }] })).j.error, "video_too_long");
+eq("audio >3 menit → 422", (await post({ body: "x", media: [{ kind: "audio", key: `a/${uid}/33333333-3333-4333-8333-333333333333.m4a`, d: 180001 }] })).j.error, "audio_too_long");
 eq("body bukan JSON → 400", (await call("/api/posts", { token: T, m: "POST", raw: new TextEncoder().encode("{{{"), ct: "application/json" })).s, 400);
 eq("content-type salah → 415", (await call("/api/posts", { token: T, m: "POST", raw: new TextEncoder().encode("x"), ct: "text/plain" })).s, 415);
 eq("nama pengguna aneh di path → 404", (await call("/api/users/" + encodeURIComponent("x'; drop table posts;--"), { token: T })).s, 404);
